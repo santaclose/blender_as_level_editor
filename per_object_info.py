@@ -10,6 +10,7 @@ OBJECT_PROPERTIES = [
 	"DisableOnExitZone",
 ]
 
+
 class AddLevelEditorInfoToObject(bpy.types.Operator):
 	bl_idname = "object.add_level_editor_info"
 	bl_label = "Add level editor info to object"
@@ -18,6 +19,16 @@ class AddLevelEditorInfoToObject(bpy.types.Operator):
 	def execute(self, context):
 		bpy.context.object.level_editor_info.add()
 		return {'FINISHED'}
+
+class AddLevelEditorInfoToCollection(bpy.types.Operator):
+	bl_idname = "collection.add_level_editor_info"
+	bl_label = "Add level editor info to collection"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		bpy.context.collection.level_editor_info.add()
+		return {'FINISHED'}
+
 
 class RemoveLevelEditorInfoFromObject(bpy.types.Operator):
 	bl_idname = "object.remove_level_editor_info"
@@ -30,15 +41,26 @@ class RemoveLevelEditorInfoFromObject(bpy.types.Operator):
 		bpy.context.object.level_editor_info.remove(self.index)
 		return {'FINISHED'}
 
+class RemoveLevelEditorInfoFromCollection(bpy.types.Operator):
+	bl_idname = "collection.remove_level_editor_info"
+	bl_label = "Remove level editor info from collection"
+	bl_options = {'REGISTER', 'UNDO'}
+	
+	index: bpy.props.IntProperty(name="index", default=0)
 
-class PerObjectPropertyGroup(bpy.types.PropertyGroup):
+	def execute(self, context):
+		bpy.context.collection.level_editor_info.remove(self.index)
+		return {'FINISHED'}
+
+
+class EditorInfoPropertyGroup(bpy.types.PropertyGroup):
 	info_type: bpy.props.EnumProperty(
 		items=[(x, x, x) for x in OBJECT_PROPERTIES],
 		name="Type")
 	info_value: bpy.props.StringProperty(name="Value")
 
 
-class LevelEditorInfoPanel(bpy.types.Panel):
+class LevelEditorObjectInfoPanel(bpy.types.Panel):
 	bl_label = "Santa's Level Editor Info"
 	bl_idname = "object_PT_layout"
 	bl_space_type = 'PROPERTIES'
@@ -64,21 +86,53 @@ class LevelEditorInfoPanel(bpy.types.Panel):
 		layout.operator("object.add_level_editor_info")
 
 
+class LevelEditorCollectionInfoPanel(bpy.types.Panel):
+	bl_label = "Santa's Level Editor Info"
+	bl_idname = "collection_PT_layout"
+	bl_space_type = 'PROPERTIES'
+	bl_region_type = 'WINDOW'
+	bl_context = "collection"
+
+	def draw(self, context):
+		if not hasattr(bpy.types.Collection, 'level_editor_info'):
+			return
+		collection = context.collection
+		layout = self.layout
+		level_editor_info = collection.level_editor_info
+		
+		current_index = 0
+		for item in level_editor_info:
+			box = layout.box()
+			box.prop(item, "info_type")
+			box.prop(item, "info_value")
+			op = box.operator("collection.remove_level_editor_info")
+			op.index = current_index
+			current_index += 1
+		
+		layout.operator("collection.add_level_editor_info")
+
+
 classes = (
 	AddLevelEditorInfoToObject,
+	AddLevelEditorInfoToCollection,
 	RemoveLevelEditorInfoFromObject,
-	PerObjectPropertyGroup,
-	LevelEditorInfoPanel,
+	RemoveLevelEditorInfoFromCollection,
+	EditorInfoPropertyGroup,
+	LevelEditorObjectInfoPanel,
+	LevelEditorCollectionInfoPanel,
 )
 
 def register():
 	for cls in classes:
 		bpy.utils.register_class(cls)
-	bpy.types.Object.level_editor_info = bpy.props.CollectionProperty(type=PerObjectPropertyGroup)
+	bpy.types.Object.level_editor_info = bpy.props.CollectionProperty(type=EditorInfoPropertyGroup)
+	bpy.types.Collection.level_editor_info = bpy.props.CollectionProperty(type=EditorInfoPropertyGroup)
 
 def unregister():
 	if hasattr(bpy.types.Object, 'level_editor_info'):
 		del bpy.types.Object.level_editor_info
+	if hasattr(bpy.types.Collection, 'level_editor_info'):
+		del bpy.types.Collection.level_editor_info
 	for cls in reversed(classes):
 		bpy.utils.unregister_class(cls)
 

@@ -2,10 +2,40 @@ import bpy
 import json
 
 
-def find_children_collections_recursively(collection, output_list):
-	output_list.extend([x for x in collection.children])
+def list_from_info_attribute(info_attribute):
+	to_return = []
+	for info_item in info_attribute:
+		to_return.append({"type": info_item.info_type, "value": info_item.info_value})
+	return to_return
+
+def per_collection_function(col, result, json_root_key, parent_info):
+	parent_info = col.level_editor_info if len(col.level_editor_info) > 0 else parent_info
+	for obj in col.objects:
+		prev_rotation_mode = obj.rotation_mode
+		
+		obj.rotation_mode = 'XYZ'
+		if "." in obj.name:
+			obj_type = obj.name.split('.')[0]
+		else:
+			obj_type = obj.name
+		new_object = {}
+		new_object["type"] = obj_type
+		new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
+		new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
+		if len(obj.level_editor_info) > 0 or parent_info is None:
+			new_object["properties"] = list_from_info_attribute(obj.level_editor_info)
+		else:
+			new_object["properties"] = list_from_info_attribute(parent_info)
+
+		result[json_root_key].append(new_object)
+		
+		obj.rotation_mode = prev_rotation_mode
+
+
+def recursive_function(collection, result, json_root_key="objects", parent_info=None):
+	per_collection_function(collection, result, json_root_key, parent_info)
 	for child in collection.children:
-		find_children_collections_recursively(child, output_list)
+		recursive_function(child, result, json_root_key, parent_info=collection.level_editor_info if len(collection.level_editor_info) > 0 else parent_info)
 
 def export_santa_level(output_file_path, level_collection_name="Level", json_root_key="objects"):
 	result = {json_root_key: []}
@@ -15,34 +45,12 @@ def export_santa_level(output_file_path, level_collection_name="Level", json_roo
 		if col.name == level_collection_name:
 			target_collection = col
 			break
-		
+
 	if target_collection is None:
 		print("Could not find collection")
 		return False
-	children_collections = []
-	find_children_collections_recursively(target_collection, children_collections)
-	target_collections = [target_collection]
-	target_collections.extend(children_collections)
-	
-	for col in target_collections:
-		for obj in col.objects:
-			prev_rotation_mode = obj.rotation_mode
-			
-			obj.rotation_mode = 'XYZ'
-			if "." in obj.name:
-				obj_type = obj.name.split('.')[0]
-			else:
-				obj_type = obj.name
-			new_object = {}
-			new_object["type"] = obj_type
-			new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
-			new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
-			new_object["properties"] = []
-			for info_item in obj.level_editor_info:
-				new_object["properties"].append({"type": info_item.info_type, "value": info_item.info_value})
-			result[json_root_key].append(new_object)
-			
-			obj.rotation_mode = prev_rotation_mode
+
+	recursive_function(target_collection, result, json_root_key)
 
 	with open(output_file_path, 'w') as output_file:
 		output_file.write(json.dumps(result, indent='\t'))
