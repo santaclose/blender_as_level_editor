@@ -9,7 +9,6 @@ def list_from_info_attribute(info_attribute):
 	return to_return
 
 def per_collection_function(col, result, json_root_key, parent_info):
-	parent_info = col.level_editor_info if len(col.level_editor_info) > 0 else parent_info
 	for obj in col.objects:
 		prev_rotation_mode = obj.rotation_mode
 		
@@ -22,10 +21,8 @@ def per_collection_function(col, result, json_root_key, parent_info):
 		new_object["type"] = obj_type
 		new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
 		new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
-		if len(obj.level_editor_info) > 0 or parent_info is None:
-			new_object["properties"] = list_from_info_attribute(obj.level_editor_info)
-		else:
-			new_object["properties"] = list_from_info_attribute(parent_info)
+		new_object["properties"] = list_from_info_attribute(obj.level_editor_info)
+		new_object["properties"].extend(parent_info)
 
 		result[json_root_key].append(new_object)
 		
@@ -33,9 +30,14 @@ def per_collection_function(col, result, json_root_key, parent_info):
 
 
 def recursive_function(collection, result, json_root_key="objects", parent_info=None):
+	if parent_info is None:
+		parent_info = []
+	else:
+		parent_info = [x for x in parent_info]
+	parent_info.extend(list_from_info_attribute(collection.level_editor_info))
 	per_collection_function(collection, result, json_root_key, parent_info)
 	for child in collection.children:
-		recursive_function(child, result, json_root_key, parent_info=collection.level_editor_info if len(collection.level_editor_info) > 0 else parent_info)
+		recursive_function(child, result, json_root_key=json_root_key, parent_info=parent_info)
 
 def export_santa_level(output_file_path, level_collection_name="Level", json_root_key="objects"):
 	result = {json_root_key: []}
