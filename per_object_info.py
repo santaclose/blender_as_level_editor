@@ -8,6 +8,9 @@ OBJECT_PROPERTIES = [
 	"DisableOnEnterZone",
 	"EnableOnExitZone",
 	"DisableOnExitZone",
+	"Trigger",
+	"EnableOnTriggerEnter",
+	"DisableOnTriggerEnter",
 ]
 
 
