@@ -74,16 +74,21 @@ class LevelEditorObjectInfoPanel(bpy.types.Panel):
 		layout = self.layout
 		level_editor_info = object.level_editor_info
 		
+		layout.operator("object.add_level_editor_info")
+		
 		current_index = 0
 		for item in level_editor_info:
 			box = layout.box()
-			box.prop(item, "info_type")
-			box.prop(item, "info_value")
-			op = box.operator("object.remove_level_editor_info")
+			row = box.row()
+			sub = row.row()
+			sub.scale_x = 1.25
+			sub.prop(item, "info_type")
+			row.prop(item, "info_value")
+			sub = row.row()
+			sub.scale_x = 0.5
+			op = sub.operator("object.remove_level_editor_info", text="–")
 			op.index = current_index
 			current_index += 1
-		
-		layout.operator("object.add_level_editor_info")
 
 
 class LevelEditorCollectionInfoPanel(bpy.types.Panel):
@@ -99,17 +104,22 @@ class LevelEditorCollectionInfoPanel(bpy.types.Panel):
 		collection = context.collection
 		layout = self.layout
 		level_editor_info = collection.level_editor_info
+
+		layout.operator("collection.add_level_editor_info")
 		
 		current_index = 0
 		for item in level_editor_info:
 			box = layout.box()
-			box.prop(item, "info_type")
-			box.prop(item, "info_value")
-			op = box.operator("collection.remove_level_editor_info")
+			row = box.row()
+			sub = row.row()
+			sub.scale_x = 1.25
+			sub.prop(item, "info_type")
+			row.prop(item, "info_value")
+			sub = row.row()
+			sub.scale_x = 0.5
+			op = sub.operator("collection.remove_level_editor_info", text="–")
 			op.index = current_index
 			current_index += 1
-		
-		layout.operator("collection.add_level_editor_info")
 
 
 classes = (
