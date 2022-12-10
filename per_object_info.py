@@ -1,18 +1,5 @@
 import bpy
 
-OBJECT_PROPERTIES = [
-	"Zone",
-	"PositiveZone",
-	"NegativeZone",
-	"EnableOnEnterZone",
-	"DisableOnEnterZone",
-	"EnableOnExitZone",
-	"DisableOnExitZone",
-	"Trigger",
-	"EnableOnTriggerEnter",
-	"DisableOnTriggerEnter",
-]
-
 
 class AddLevelEditorInfoToObject(bpy.types.Operator):
 	bl_idname = "object.add_level_editor_info"
@@ -56,9 +43,11 @@ class RemoveLevelEditorInfoFromCollection(bpy.types.Operator):
 		return {'FINISHED'}
 
 
+def getPropertyTypes(self, context):
+	return [(x.string_value, x.string_value, x.string_value) for x in bpy.context.preferences.addons['santas_level_editor'].preferences.property_types]
 class EditorInfoPropertyGroup(bpy.types.PropertyGroup):
 	info_type: bpy.props.EnumProperty(
-		items=[(x, x, x) for x in OBJECT_PROPERTIES],
+		items=getPropertyTypes,
 		name="Type")
 	info_value: bpy.props.StringProperty(name="Value")
 
