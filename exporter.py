@@ -19,9 +19,12 @@ def per_collection_function(col, result, json_root_key, parent_info):
 			obj_type = obj.name
 		new_object = {}
 		new_object["type"] = obj_type
-		new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
-		new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
-		new_object["scale"] = [obj.scale[0], obj.scale[1], obj.scale[2]]
+		if obj.location.magnitude != 0.0:
+			new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
+		if abs(obj.rotation_euler[0]) != 0 or abs(obj.rotation_euler[1]) != 0 or abs(obj.rotation_euler[2]) != 0:
+			new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
+		if obj.scale[0] != 1.0 or obj.scale[1] != 1.0 or obj.scale[2] != 1.0:
+			new_object["scale"] = [obj.scale[0], obj.scale[1], obj.scale[2]]
 		new_object["properties"] = list_from_info_attribute(obj.level_editor_info)
 		new_object["properties"].extend(parent_info)
 
