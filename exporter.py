@@ -1,5 +1,6 @@
 import bpy
 import json
+import re
 
 
 def list_from_info_attribute(info_attribute):
@@ -9,6 +10,7 @@ def list_from_info_attribute(info_attribute):
 	return to_return
 
 def per_collection_function(col, result, json_root_key, parent_info):
+	prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
 	for obj in col.objects:
 		prev_rotation_mode = obj.rotation_mode
 		
@@ -20,11 +22,14 @@ def per_collection_function(col, result, json_root_key, parent_info):
 		new_object = {}
 		new_object["type"] = obj_type
 		if obj.location.magnitude != 0.0:
-			new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
+			if len(prefs.location_filter_pattern) == 0 or re.match(prefs.location_filter_pattern, obj_type):
+				new_object["position"] = [obj.location[0], obj.location[1], obj.location[2]]
 		if abs(obj.rotation_euler[0]) != 0 or abs(obj.rotation_euler[1]) != 0 or abs(obj.rotation_euler[2]) != 0:
-			new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
+			if len(prefs.rotation_filter_pattern) == 0 or re.match(prefs.rotation_filter_pattern, obj_type):
+				new_object["rotation"] = [obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
 		if obj.scale[0] != 1.0 or obj.scale[1] != 1.0 or obj.scale[2] != 1.0:
-			new_object["scale"] = [obj.scale[0], obj.scale[1], obj.scale[2]]
+			if len(prefs.scale_filter_pattern) == 0 or re.match(prefs.scale_filter_pattern, obj_type):
+				new_object["scale"] = [obj.scale[0], obj.scale[1], obj.scale[2]]
 		new_object["properties"] = list_from_info_attribute(obj.level_editor_info)
 		new_object["properties"].extend(parent_info)
 
