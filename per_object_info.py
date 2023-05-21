@@ -1,6 +1,59 @@
 import bpy
 
 
+class CopyLevelEditorInfoFromObject(bpy.types.Operator):
+	bl_idname = "object.copy_level_editor_info"
+	bl_label = "Copy level editor info from object"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+		prefs.copied_level_editor_info.clear()
+		for item in bpy.context.object.level_editor_info:
+			prefs.copied_level_editor_info.append((item.info_type, item.info_value))
+		return {'FINISHED'}
+
+class PasteLevelEditorInfoToObject(bpy.types.Operator):
+	bl_idname = "object.paste_level_editor_info"
+	bl_label = "Paste level editor info from object"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+		bpy.context.object.level_editor_info.clear()
+		for item in prefs.copied_level_editor_info:
+			bpy.context.object.level_editor_info.add()
+			bpy.context.object.level_editor_info[-1].info_type = item[0]
+			bpy.context.object.level_editor_info[-1].info_value = item[1]
+		return {'FINISHED'}
+
+class CopyLevelEditorInfoFromCollection(bpy.types.Operator):
+	bl_idname = "collection.copy_level_editor_info"
+	bl_label = "Copy level editor info from collection"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+		prefs.copied_level_editor_info.clear()
+		for item in bpy.context.collection.level_editor_info:
+			prefs.copied_level_editor_info.append((item.info_type, item.info_value))
+		return {'FINISHED'}
+
+class PasteLevelEditorInfoToCollection(bpy.types.Operator):
+	bl_idname = "collection.paste_level_editor_info"
+	bl_label = "Paste level editor info from collection"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+		bpy.context.collection.level_editor_info.clear()
+		for item in prefs.copied_level_editor_info:
+			bpy.context.collection.level_editor_info.add()
+			bpy.context.collection.level_editor_info[-1].info_type = item[0]
+			bpy.context.collection.level_editor_info[-1].info_value = item[1]
+		return {'FINISHED'}
+
+
 class AddLevelEditorInfoToObject(bpy.types.Operator):
 	bl_idname = "object.add_level_editor_info"
 	bl_label = "Add level editor info to object"
@@ -82,6 +135,10 @@ class LevelEditorObjectInfoPanel(bpy.types.Panel):
 			op.index = current_index
 			current_index += 1
 
+		row = layout.row()
+		row.operator("object.copy_level_editor_info")
+		row.operator("object.paste_level_editor_info")
+
 
 class LevelEditorCollectionInfoPanel(bpy.types.Panel):
 	bl_label = "Santa's Level Editor Info"
@@ -113,8 +170,16 @@ class LevelEditorCollectionInfoPanel(bpy.types.Panel):
 			op.index = current_index
 			current_index += 1
 
+		row = layout.row()
+		row.operator("collection.copy_level_editor_info")
+		row.operator("collection.paste_level_editor_info")
+
 
 classes = (
+	CopyLevelEditorInfoFromObject,
+	PasteLevelEditorInfoToObject,
+	CopyLevelEditorInfoFromCollection,
+	PasteLevelEditorInfoToCollection,
 	AddLevelEditorInfoToObject,
 	AddLevelEditorInfoToCollection,
 	RemoveLevelEditorInfoFromObject,

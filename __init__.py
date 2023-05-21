@@ -58,6 +58,7 @@ class LevelEditorAddonPreferences(bpy.types.AddonPreferences):
 	rotation_filter_pattern: bpy.props.StringProperty(name="Rotation filter pattern")
 	scale_filter_pattern: bpy.props.StringProperty(name="Scale filter pattern")
 	property_types: bpy.props.CollectionProperty(type=EditorInfoPropertyTypeGroup)
+	copied_level_editor_info = []
 	def draw(self, context):
 		preferences = bpy.context.preferences.addons['santas_level_editor'].preferences
 		layout = self.layout
