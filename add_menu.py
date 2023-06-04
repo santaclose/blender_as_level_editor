@@ -10,7 +10,7 @@ def menu_func(self, context):
 def generate_code_from_folder(folder):
 
 	if not os.path.isdir(folder):
-		return "", "", "[]"
+		return "", ""
 
 	def path_to_dict(path, root_call = True):
 		if root_call and (path[-1] == '\\' or path[-1] == '/'):
@@ -77,9 +77,10 @@ CODE
 
 	# UnregisterCode = "\n".join([f"bpy.utils.unregister_class(LevelEditorAddSubmenuGroup_{x})" for x in range(GroupIdCounter)])
 	# UnregisterCode += "\nbpy.utils.unregister_class(LevelEditorAddSubmenuOperator)"
-	ClassListExpr = "[" + ', '.join([f'LevelEditorAddSubmenuGroup_{x}' for x in reversed(range(GroupIdCounter))]) + "]"
 
-	return ClassDefinitionsCode, RegisterCode, ClassListExpr
+	# ClassListExpr = "[" + ', '.join([f'LevelEditorAddSubmenuGroup_{x}' for x in reversed(range(GroupIdCounter))]) + "]"
+
+	return ClassDefinitionsCode, RegisterCode#, ClassListExpr
 
 
 # ----------------------- REGISTER ---------------------
