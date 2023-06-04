@@ -1,7 +1,8 @@
+import santas_level_editor.add_menu as add_menu
 import santas_level_editor.exporter as exporter
 import santas_level_editor.per_object_info as per_object_info
-import json
 import bpy_extras.io_utils
+import json
 import bpy
 
 bl_info = {
@@ -39,29 +40,79 @@ class LoadPreferencesFromJson(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
 		options={'HIDDEN'}
 	)
 	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+
 		with open(self.filepath, 'r') as json_file:
 			json_object = json.loads(json_file.read())
-			bpy.context.preferences.addons['santas_level_editor'].preferences.location_filter_pattern = json_object["location_filter_pattern"]
-			bpy.context.preferences.addons['santas_level_editor'].preferences.rotation_filter_pattern = json_object["rotation_filter_pattern"]
-			bpy.context.preferences.addons['santas_level_editor'].preferences.scale_filter_pattern = json_object["scale_filter_pattern"]
-			bpy.context.preferences.addons['santas_level_editor'].preferences.property_types.clear()
+			prefs.object_models_folder = json_object["object_models_folder"] if "object_models_folder" in json_object.keys() else ''
+			prefs.location_filter_pattern = json_object["location_filter_pattern"]
+			prefs.rotation_filter_pattern = json_object["rotation_filter_pattern"]
+			prefs.scale_filter_pattern = json_object["scale_filter_pattern"]
+			prefs.property_types.clear()
 			for item in json_object["property_types"]:
-				bpy.context.preferences.addons['santas_level_editor'].preferences.property_types.add()
-				bpy.context.preferences.addons['santas_level_editor'].preferences.property_types.items()[-1][1].string_value = item
+				prefs.property_types.add()
+				prefs.property_types.items()[-1][1].string_value = item
 
+		# add menu
+		if len(prefs.registered_add_menu_classes) > 0:
+			# unregister old
+			for x in reversed(prefs.registered_add_menu_classes):
+				bpy.utils.unregister_class(x)
+			bpy.types.VIEW3D_MT_add.remove(add_menu.menu_func)
+
+		# register new
+		classes, reg, classListExpr = add_menu.generate_code_from_folder(prefs.object_models_folder)
+		if len(classes) > 0: # if user specified valid folder
+			exec(classes)
+			exec(reg)
+			prefs.registered_add_menu_classes = eval(classListExpr)
+			bpy.types.VIEW3D_MT_add.append(add_menu.menu_func)
+
+		return {'FINISHED'}
+
+class LoadModelsFolder(bpy.types.Operator):
+	bl_idname = "preferences.load_models_folder"
+	bl_label = "Load models folder"
+	bl_options = {'REGISTER', 'UNDO'}
+	def execute(self, context):
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+
+		# add menu
+		breakpoint()
+		if len(prefs.registered_add_menu_classes) > 0:
+			# unregister old
+			for x in reversed(prefs.registered_add_menu_classes):
+				bpy.utils.unregister_class(x)
+			bpy.types.VIEW3D_MT_add.remove(add_menu.menu_func)
+
+		# register new
+		classes, reg, classListExpr = add_menu.generate_code_from_folder(prefs.object_models_folder)
+		if len(classes) > 0: # if user specified valid folder
+			exec(classes)
+			exec(reg)
+			breakpoint()
+			prefs.registered_add_menu_classes = eval(classListExpr)
+			bpy.types.VIEW3D_MT_add.append(add_menu.menu_func)
 		return {'FINISHED'}
 
 
 class LevelEditorAddonPreferences(bpy.types.AddonPreferences):
 	bl_idname = __name__
+	object_models_folder: bpy.props.StringProperty(name="Object models folder")
 	location_filter_pattern: bpy.props.StringProperty(name="Location filter pattern")
 	rotation_filter_pattern: bpy.props.StringProperty(name="Rotation filter pattern")
 	scale_filter_pattern: bpy.props.StringProperty(name="Scale filter pattern")
 	property_types: bpy.props.CollectionProperty(type=EditorInfoPropertyTypeGroup)
 	copied_level_editor_info = []
+	registered_add_menu_classes = []
 	def draw(self, context):
 		preferences = bpy.context.preferences.addons['santas_level_editor'].preferences
 		layout = self.layout
+		row = layout.row()
+		row.prop(preferences, "object_models_folder")
+		sub = row.row()
+		sub.scale_x = 0.4
+		sub.operator("preferences.load_models_folder", text="Load")
 		layout.prop(preferences, "location_filter_pattern")
 		layout.prop(preferences, "rotation_filter_pattern")
 		layout.prop(preferences, "scale_filter_pattern")
@@ -88,6 +139,7 @@ classes = (
 	RemoveLevelEditorPropertyTypeFromPreferences,
 	LoadPreferencesFromJson,
 	LevelEditorAddonPreferences,
+	LoadModelsFolder,
 )
 
 def register():
@@ -99,6 +151,11 @@ def register():
 
 
 def unregister():
+	prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+	for x in reversed(prefs.registered_add_menu_classes):
+		bpy.utils.unregister_class(x)
+	bpy.types.VIEW3D_MT_add.remove(add_menu.menu_func)
+
 	exporter.unregister()
 	per_object_info.unregister()
 	for cls in reversed(classes):
