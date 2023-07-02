@@ -32,10 +32,29 @@ class LevelEditorAddSubmenuOperator(bpy.types.Operator):
 	bl_idname = "mesh.generic_effector"
 	bl_label = "Add Generic Effector"
 	bl_options = {'REGISTER', 'UNDO'}
-	id: bpy.props.StringProperty(name="id", default="Unknown")
+	object_name: bpy.props.StringProperty(name="object_name", default="Unknown")
+	relative_path: bpy.props.StringProperty(name="relative_path", default="Unknown")
 
 	def execute(self,context):
-		print(f"{id}")
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+
+		import os
+		import random
+		full_object_path = os.path.join(prefs.object_models_folder, self.relative_path)
+
+		original_objs = set(bpy.data.objects)
+		bpy.ops.import_scene.obj(
+			filepath=full_object_path,
+			axis_forward='Y',
+			axis_up='Z'
+			)
+
+		imported_objs = set(bpy.data.objects) - original_objs
+		assert(len(imported_objs) == 1)
+		for obj in imported_objs:
+			random_alphanumeric = "%032x" % random.getrandbits(128)
+			obj.name = f"{self.object_name}.{random_alphanumeric[:6]}"
+			obj.location = bpy.context.scene.cursor.location
 		return {'FINISHED'}
 """
 
@@ -51,20 +70,22 @@ class LevelEditorAddSubmenuGroup_GROUP_ID(bpy.types.Menu):
 CODE
 """
 
-	def BuildMenuCode(FileTreeObject, CodeToRun = "", GroupIdCounter = 0):
+	def BuildMenuCode(FileTreeObject, CodeToRun = "", GroupIdCounter = 0, CurrentPath = ""):
 
 		CurrentGroupId = GroupIdCounter
 		FileTreeObject['group_id'] = CurrentGroupId
 		GroupIdCounter += 1
 
 		for i, x in enumerate([x for x in FileTreeObject['children'] if x['type'] == 'directory']):
-			CodeToRun, GroupIdCounter = BuildMenuCode(x, CodeToRun, GroupIdCounter)
+			CodeToRun, GroupIdCounter = BuildMenuCode(x, CodeToRun, GroupIdCounter, f'{CurrentPath}/{x["name"]}')
 		CodeSection = ""
 		for i, x in enumerate([x for x in FileTreeObject['children'] if x['type'] == 'directory']):
 			CodeSection += f'\t\tlayout.menu("LevelEditorAddSubmenuGroup_{x["group_id"]}", text="{x["name"]}")\n'
 		for i, x in enumerate([x for x in FileTreeObject['children'] if x['type'] == 'file']):
+			ObjectRelativePath = f'{CurrentPath}/{x["name"]}'[1:]
 			CodeSection += f'\t\top = layout.operator("mesh.generic_effector", text="{x["name"][:x["name"].rfind(".")]}")\n'
-			CodeSection += f'\t\top.id = "{x["name"][:x["name"].rfind(".")]}"\n'
+			CodeSection += f'\t\top.object_name = "{x["name"][:x["name"].rfind(".")]}"\n'
+			CodeSection += f'\t\top.relative_path = "{ObjectRelativePath}"\n'
 		CodeToRun += SubmenuLevelMenuTemplate.replace("GROUP_ID", str(CurrentGroupId)).replace("CODE", CodeSection)
 		return CodeToRun, GroupIdCounter
 

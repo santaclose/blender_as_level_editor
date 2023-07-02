@@ -48,7 +48,7 @@ def recursive_function(collection, result, json_root_key="objects", parent_info=
 	for child in collection.children:
 		recursive_function(child, result, json_root_key=json_root_key, parent_info=parent_info)
 
-def export_santa_level(output_file_path, level_collection_name="Level", json_root_key="objects"):
+def export_santa_level(output_file_path, level_collection_name, json_root_key):
 	result = {json_root_key: []}
 
 	target_collection = None
@@ -89,7 +89,7 @@ class ExportSantaLevel(Operator, ExportHelper):
 
 	level_collection_name_property: StringProperty(
 		name="Level Collection Name",
-		default="Level",
+		default="Collection",
 	)
 	json_root_key_property: StringProperty(
 		name="JSON root key",
