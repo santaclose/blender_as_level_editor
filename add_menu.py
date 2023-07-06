@@ -20,7 +20,7 @@ def generate_code_from_folder(folder):
 			d['type'] = "directory"
 			# folders first
 			d['children'] = [path_to_dict(os.path.join(path,x), False) for x in os.listdir(path) if os.path.isdir(os.path.join(path, x))]
-			d['children'].extend([path_to_dict(os.path.join(path,x), False) for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))])
+			d['children'].extend([path_to_dict(os.path.join(path,x), False) for x in os.listdir(path) if os.path.isfile(os.path.join(path, x)) and x.endswith('.obj')])
 		else:
 			d['type'] = "file"
 		return d

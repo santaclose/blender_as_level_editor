@@ -1,6 +1,6 @@
+import re
 import bpy
 import json
-import re
 
 
 def list_from_info_attribute(info_attribute):
@@ -77,7 +77,7 @@ from bpy.types import Operator
 
 class ExportSantaLevel(Operator, ExportHelper):
 	bl_idname = "export_santa.level"
-	bl_label = "Export Santa Level"
+	bl_label = "Export Santa level"
 
 	filename_ext = ".json"
 

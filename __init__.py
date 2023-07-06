@@ -1,9 +1,11 @@
 import santas_level_editor.add_menu as add_menu
-import santas_level_editor.exporter as exporter
+import santas_level_editor.json_exporter as json_exporter
+import santas_level_editor.obj_tree_exporter as obj_tree_exporter
 import santas_level_editor.per_object_info as per_object_info
 import bpy_extras.io_utils
 import json
 import bpy
+import os
 
 bl_info = {
 	"name": "Santa's level editor",
@@ -44,7 +46,12 @@ class LoadPreferencesFromJson(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
 
 		with open(self.filepath, 'r') as json_file:
 			json_object = json.loads(json_file.read())
-			prefs.object_models_folder = json_object["object_models_folder"] if "object_models_folder" in json_object.keys() else ''
+			if "object_models_folder" not in json_object.keys():
+				prefs.object_models_folder = ''
+			elif ":" in json_object["object_models_folder"] or json_object["object_models_folder"][0] in '\\/': # is absolute path
+				prefs.object_models_folder = json_object["object_models_folder"]
+			else: # is relative path
+				prefs.object_models_folder = os.path.join(os.path.dirname(self.filepath), json_object["object_models_folder"])
 			prefs.location_filter_pattern = json_object["location_filter_pattern"]
 			prefs.rotation_filter_pattern = json_object["rotation_filter_pattern"]
 			prefs.scale_filter_pattern = json_object["scale_filter_pattern"]
@@ -130,7 +137,8 @@ def register():
 		bpy.utils.register_class(cls)
 
 	per_object_info.register()
-	exporter.register()
+	json_exporter.register()
+	obj_tree_exporter.register()
 
 	prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
 	menu_classes, menu_register = add_menu.generate_code_from_folder(prefs.object_models_folder)
@@ -143,7 +151,8 @@ def register():
 def unregister():
 	bpy.types.VIEW3D_MT_add.remove(add_menu.menu_func)
 
-	exporter.unregister()
+	obj_tree_exporter.unregister()
+	json_exporter.unregister()
 	per_object_info.unregister()
 	for cls in reversed(classes):
 		bpy.utils.unregister_class(cls)
