@@ -86,6 +86,36 @@ class LoadModelsFolder(bpy.types.Operator):
 			bpy.types.VIEW3D_MT_add.append(add_menu.menu_func)
 		return {'FINISHED'}
 
+class LevelEditorAddObject(bpy.types.Operator):
+	bl_idname = "mesh.add_level_editor_object"
+	bl_label = "Add level editor object"
+	bl_options = {'REGISTER', 'UNDO'}
+	object_name: bpy.props.StringProperty(name="object_name", default="Unknown")
+	relative_path: bpy.props.StringProperty(name="relative_path", default="Unknown")
+
+	def execute(self,context):
+		import os
+		import random
+		
+		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
+		full_object_path = os.path.join(prefs.object_models_folder, self.relative_path)
+
+		original_objs = set(bpy.data.objects)
+		bpy.ops.wm.obj_import(
+			filepath=full_object_path,
+			forward_axis='Y',
+			up_axis='Z'
+			)
+
+		imported_objs = set(bpy.data.objects) - original_objs
+		if len(imported_objs) != 1:
+			print(f"Expecting to import 1 object, but got {len(imported_objs)} instead")
+		for obj in imported_objs:
+			random_alphanumeric = "%032x" % random.getrandbits(128)
+			obj.name = f"{self.object_name}.{random_alphanumeric[:6]}"
+			obj.location = bpy.context.scene.cursor.location
+		return {'FINISHED'}
+
 
 class LevelEditorAddonPreferences(bpy.types.AddonPreferences):
 	bl_idname = __name__
@@ -122,7 +152,6 @@ class LevelEditorAddonPreferences(bpy.types.AddonPreferences):
 
 		layout.operator("preferences.load_from_json")
 
-
 classes = (
 	EditorInfoPropertyTypeGroup,
 	AddLevelEditorPropertyTypeToPreferences,
@@ -130,6 +159,7 @@ classes = (
 	LoadPreferencesFromJson,
 	LevelEditorAddonPreferences,
 	LoadModelsFolder,
+	LevelEditorAddObject,
 )
 
 def register():

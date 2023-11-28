@@ -36,25 +36,7 @@ class LevelEditorAddSubmenuOperator(bpy.types.Operator):
 	relative_path: bpy.props.StringProperty(name="relative_path", default="Unknown")
 
 	def execute(self,context):
-		prefs = bpy.context.preferences.addons['santas_level_editor'].preferences
-
-		import os
-		import random
-		full_object_path = os.path.join(prefs.object_models_folder, self.relative_path)
-
-		original_objs = set(bpy.data.objects)
-		bpy.ops.import_scene.obj(
-			filepath=full_object_path,
-			axis_forward='Y',
-			axis_up='Z'
-			)
-
-		imported_objs = set(bpy.data.objects) - original_objs
-		assert(len(imported_objs) == 1)
-		for obj in imported_objs:
-			random_alphanumeric = "%032x" % random.getrandbits(128)
-			obj.name = f"{self.object_name}.{random_alphanumeric[:6]}"
-			obj.location = bpy.context.scene.cursor.location
+		bpy.ops.mesh.add_level_editor_object(object_name=self.object_name, relative_path=self.relative_path)
 		return {'FINISHED'}
 """
 
@@ -62,7 +44,6 @@ class LevelEditorAddSubmenuOperator(bpy.types.Operator):
 class LevelEditorAddSubmenuGroup_GROUP_ID(bpy.types.Menu):
 	bl_idname = "LevelEditorAddSubmenuGroup_GROUP_ID"
 	bl_label = "Level editor object"
-	bl_options = {'REGISTER', 'UNDO'}
 
 	def draw(self, context):
 		layout = self.layout

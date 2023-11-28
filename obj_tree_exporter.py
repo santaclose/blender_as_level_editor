@@ -14,12 +14,12 @@ def recursive_function(currentPath, collection, isRootCall=True):
         object.select_set(True)
         original_location = object.location.copy()
         object.location = mathutils.Vector((0.0, 0.0, 0.0))
-        bpy.ops.export_scene.obj(
+        bpy.ops.wm.obj_export(
             filepath=f"{currentPath}\\{object.name}.obj",
-            axis_forward="Y",
-            axis_up="Z",
-            use_materials=False,
-            use_selection=True
+            forward_axis="Y",
+            up_axis="Z",
+            export_materials=False,
+            export_selected_objects=True
         )
         object.location = original_location
     for col in collection.children:
